@@ -1050,6 +1050,237 @@ body.dark ::-webkit-scrollbar-thumb:hover {
             });
             document.querySelectorAll('#navMobile .mobile-link').forEach(a => a.addEventListener('click', () => mobile.style.display = 'none'));
         })();
+        // ============================================================
+//  🛡️ 防开发者工具保护系统
+//  防止 F12、Ctrl+Shift+I、Ctrl+Shift+J 等打开开发者工具
+// ============================================================
+
+(function() {
+    'use strict';
+    document.addEventListener('keydown', function(e) {
+        // 阻止 F12
+        if (e.key === 'F12' || e.keyCode === 123) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+
+        // 阻止 Ctrl+Shift+I (开发者工具)
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) {
+            e.preventDefault();
+            e.stopPropagation();
+            showWarning('🔒 开发者工具已被禁用');
+            return false;
+        }
+
+        // 阻止 Ctrl+Shift+J (控制台)
+        if (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) {
+            e.preventDefault();
+            e.stopPropagation();
+            showWarning('🔒 开发者工具已被禁用');
+            return false;
+        }
+
+        // 阻止 Ctrl+U (查看源代码)
+        if (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) {
+            e.preventDefault();
+            e.stopPropagation();
+            showWarning('🔒 查看源代码已被禁用');
+            return false;
+        }
+
+        // 阻止 Ctrl+S (保存页面)
+        if (e.ctrlKey && (e.key === 'S' || e.key === 's' || e.keyCode === 83)) {
+            e.preventDefault();
+            e.stopPropagation();
+            showWarning('🔒 保存页面已被禁用');
+            return false;
+        }
+
+        // 阻止 Ctrl+P (打印)
+        if (e.ctrlKey && (e.key === 'P' || e.key === 'p' || e.keyCode === 80)) {
+            e.preventDefault();
+            e.stopPropagation();
+            showWarning('🔒 打印已被禁用');
+            return false;
+        }
+
+        // 阻止 Ctrl+Shift+C (元素检查)
+        if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)) {
+            e.preventDefault();
+            e.stopPropagation();
+            showWarning('🔒 元素检查已被禁用');
+            return false;
+        }
+
+        return true;
+    });
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        showWarning('🔒 右键菜单已被禁用');
+        return false;
+    });
+    document.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    document.addEventListener('selectstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    let devToolsOpen = false;
+    const threshold = 160;
+    function detectDevTools() {
+        const widthDiff = window.outerWidth - window.innerWidth;
+        const heightDiff = window.outerHeight - window.innerHeight;
+        if (widthDiff > threshold || heightDiff > threshold) {
+            if (!devToolsOpen) {
+                devToolsOpen = true;
+                showWarning('🔒 检测到开发者工具，已自动阻止访问');
+            }
+        } else {
+            devToolsOpen = false;
+        }
+    }
+    setInterval(detectDevTools, 1000);
+    window.addEventListener('resize', detectDevTools);
+    function detectDebugger() {
+        const start = performance.now();
+        debugger;
+        const end = performance.now();
+        const timeDiff = end - start;
+        if (timeDiff > 50) {
+            showWarning('🔒 调试检测已触发');
+        }
+    }
+    setInterval(detectDebugger, 2000);
+    document.addEventListener('copy', function(e) {
+        e.preventDefault();
+        showWarning('🔒 复制已被禁用');
+        return false;
+    });
+
+    document.addEventListener('cut', function(e) {
+        e.preventDefault();
+        showWarning('🔒 剪切已被禁用');
+        return false;
+    });
+    setInterval(function() {
+        if (typeof console !== 'undefined' && console.clear) {
+            console.clear();
+            console.log('%c🔒 开发者工具已被禁用', 'font-size:20px;color:#ff4444;font-weight:bold;');
+            console.log('%c请尊重知识产权，不要尝试破解', 'font-size:14px;color:#c9a96e;');
+        }
+    }, 500);
+    const originalConsoleLog = console.log;
+    const originalConsoleWarn = console.warn;
+    const originalConsoleError = console.error;
+    const originalConsoleInfo = console.info;
+
+    console.log = function() {
+        const args = Array.from(arguments);
+        if (args.length > 0 && typeof args[0] === 'string' && args[0].includes('墨家机关道')) {
+            originalConsoleLog.apply(console, args);
+        }
+    };
+
+    console.warn = function() {
+    };
+
+    console.error = function() {
+    };
+
+    console.info = function() {
+    };
+    function showWarning(message) {
+        const existingWarning = document.getElementById('devToolsWarning');
+        if (existingWarning) {
+            existingWarning.textContent = message;
+            clearTimeout(existingWarning._timer);
+            existingWarning.style.opacity = '1';
+            existingWarning.style.transform = 'translateX(-50%) translateY(0)';
+            existingWarning._timer = setTimeout(() => {
+                existingWarning.style.opacity = '0';
+                existingWarning.style.transform = 'translateX(-50%) translateY(-20px)';
+                setTimeout(() => {
+                    if (existingWarning.parentNode) {
+                        existingWarning.remove();
+                    }
+                }, 500);
+            }, 1500);
+            return;
+        }
+        const warning = document.createElement('div');
+        warning.id = 'devToolsWarning';
+        warning.textContent = message;
+        warning.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(180, 30, 30, 0.95);
+            color: #ffffff;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-family: "KaiTi", "Microsoft YaHei", sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            z-index: 999999;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 200, 100, 0.2);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(8px);
+            pointer-events: none;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        `;
+        document.body.appendChild(warning);
+        setTimeout(() => {
+            warning.style.opacity = '1';
+            warning.style.transform = 'translateX(-50%) translateY(0)';
+        }, 50);
+        warning._timer = setTimeout(() => {
+            warning.style.opacity = '0';
+            warning.style.transform = 'translateX(-50%) translateY(-20px)';
+            setTimeout(() => {
+                if (warning.parentNode) {
+                    warning.remove();
+                }
+            }, 500);
+        }, 1500);
+    }
+    if (window.top !== window.self) {
+        window.top.location = window.self.location;
+    }
+    const protectedElements = document.querySelectorAll('script, link[rel="stylesheet"], meta');
+    protectedElements.forEach(el => {
+        try {
+            Object.defineProperty(el, 'outerHTML', {
+                configurable: false,
+                writable: false,
+                value: el.outerHTML
+            });
+        } catch (e) {
+        }
+    });
+
+    console.log('%c⚔ 个人介绍 | 汤学斌 ⚔', 'font-size:24px;font-weight:bold;color:#ffd700;');
+    console.log('%c🔒 开发者工具已被保护', 'font-size:14px;color:#ff4444;');
+    console.log('%c请尊重知识产权，不要尝试破解', 'font-size:12px;color:#c9a96e;');
+
+    console.log('========================================');
+    console.log('  ⚔ 个人介绍 | 汤学斌 ⚔');
+    console.log('  🔒 受版权保护，禁止逆向工程');
+    console.log('========================================');
+    setTimeout(detectDevTools, 1000);
+
+    console.log('✅ 安全保护已启用');
+})();
+if (widthDiff > threshold || heightDiff > threshold) {
+    document.body.innerHTML = '<h1 style="color:red;text-align:center;margin-top:50px;">🔒 访问被拒绝</h1>';
+}
     </script>
 </body>
 </html>
